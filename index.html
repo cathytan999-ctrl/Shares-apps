@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Institutional Dashboard v3</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* ── TOKENS ── */
+:root{
+  --bg:#07101d;--panel:#0f1b2d;--panel2:#13233b;--line:#223555;
+  --text:#eaf1fb;--muted:#8aaac8;
+  --blue:#60a5fa;--blue-dim:#1e3a5f;
+  --green:#22c55e;--green-dim:#0f3320;--green-text:#86efac;
+  --yellow:#f59e0b;--yellow-dim:#2d1f00;--yellow-text:#fde68a;
+  --red:#ef4444;--red-dim:#3a0f0f;--red-text:#fca5a5;
+  --orange:#fb923c;--orange-dim:#2d1500;--orange-text:#fed7aa;
+  --purple:#a78bfa;--purple-dim:#1e1240;--purple-text:#ddd6fe;
+  --cyan:#22d3ee;--cyan-dim:#062028;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5}
+.wrap{max-width:1500px;margin:0 auto;padding:18px}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(34,211,238,.07));border:1px solid var(–line);border-radius:20px;padding:20px;margin-bottom:16px}
+.hero h1{font-size:20px;font-weight:900;margin-bottom:4px}
+.hero .sub{color:var(–muted);font-size:13px}
+
+/* ── PANELS ── */
+.panel{background:var(–panel);border:1px solid var(–line);border-radius:16px;padding:18px;margin-bottom:14px}
+h2{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(–muted);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(–line)}
+h3{font-size:12px;font-weight:800;margin-bottom:10px;color:var(–muted)}
+
+/* ── LAYOUT ── */
+.grid{display:grid;grid-template-columns:1.08fr .92fr;gap:16px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.compact{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.wide{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* ── INPUTS ── */
+label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(–muted);font-weight:700;margin-bottom:4px}
+input,select{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(–line);background:var(–panel2);color:var(–text);font-size:13px;transition:border-color .2s}
+input:focus,select:focus{outline:none;border-color:var(–blue)}
+input::placeholder{color:var(–muted);opacity:.5}
+
+/* ── BUTTONS ── */
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+button{border:none;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;font-size:13px;transition:opacity .2s}
+button:hover{opacity:.85}
+.primary{background:var(–blue);color:#07101d}
+.secondary{background:#1a2b45;color:var(–text);border:1px solid var(–line)}
+.danger{background:#3a1515;color:var(–red-text);border:1px solid var(–red-dim)}
+.preset-wrap{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.preset{background:#182844;color:var(–text);border:1px solid var(–line);border-radius:999px;padding:7px 13px;font-weight:700;cursor:pointer;font-size:12px}
+.preset:hover{border-color:var(–blue);color:var(–blue)}
+
+/* ── METRIC CARDS ── */
+.metric{background:var(–panel2);border:1px solid var(–line);border-radius:14px;padding:14px}
+.metric .k{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(–muted);font-weight:700;margin-bottom:6px}
+.metric .v{font-size:26px;font-weight:900;color:var(–text)}
+.metric .vsub{font-size:11px;color:var(–muted);margin-top:4px}
+
+/* ── STATUS BADGE ── */
+.status{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.04em;margin-bottom:14px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ── CONTRAST-FIXED STATUS COLOURS ── */
+.s-green{background:var(–green-dim);color:var(–green-text);border:1px solid rgba(34,197,94,.3)}
+.s-yellow{background:var(–yellow-dim);color:var(–yellow-text);border:1px solid rgba(245,158,11,.35)}
+.s-red{background:var(–red-dim);color:var(–red-text);border:1px solid rgba(239,68,68,.3)}
+.s-blue{background:var(–blue-dim);color:#c8ddff;border:1px solid rgba(96,165,250,.25)}
+.s-orange{background:var(–orange-dim);color:var(–orange-text);border:1px solid rgba(251,146,60,.3)}
+
+/* ── BANNERS ── */
+.banner{padding:12px 14px;border-radius:12px;margin-bottom:12px;font-size:13px;font-weight:700;line-height:1.5}
+.b-green{background:var(–green-dim);color:var(–green-text);border:1px solid rgba(34,197,94,.25)}
+.b-yellow{background:var(–yellow-dim);color:var(–yellow-text);border:1px solid rgba(245,158,11,.3)}
+.b-red{background:var(–red-dim);color:var(–red-text);border:1px solid rgba(239,68,68,.25)}
+.b-orange{background:var(–orange-dim);color:var(–orange-text);border:1px solid rgba(251,146,60,.3)}
+.b-blue{background:var(–blue-dim);color:#c8ddff;border:1px solid rgba(96,165,250,.25)}
+
+/* ── HELPER / PILL ── */
+.helper{margin-top:10px;padding:11px 13px;border-radius:12px;background:#0d1e35;border:1px solid var(–line);color:var(–muted);font-size:12px;line-height:1.5}
+.pill{display:inline-block;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:800;background:#182844;color:#c8ddff}
+
+/* ── TABLES ── */
+.table{width:100%;border-collapse:collapse;margin-top:8px}
+.table th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(–muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(–line)}
+.table td{padding:10px;border-bottom:1px solid rgba(34,53,85,.6);font-size:13px;vertical-align:middle}
+.table tr:last-child td{border-bottom:none}
+.table .mono{font-family:monospace;font-weight:700}
+
+/* ── VALUE TEXT COLOURS (high contrast on dark) ── */
+.c-green{color:var(–green-text);font-weight:800}
+.c-yellow{color:var(–yellow-text);font-weight:800}
+.c-red{color:var(–red-text);font-weight:800}
+.c-blue{color:var(–blue);font-weight:800}
+.c-orange{color:var(–orange-text);font-weight:800}
+.c-purple{color:var(–purple-text);font-weight:800}
+.c-muted{color:var(–muted)}
+.c-na{color:#3a5070;font-style:italic}
+
+/* ── BAR ── */
+.bar-wrap{background:#162236;border-radius:4px;height:6px;overflow:hidden;width:90px;display:inline-block;vertical-align:middle}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+
+/* ── NARRATIVE BOX ── */
+.narrative{background:#0d1e35;border:1px solid var(–line);border-radius:12px;padding:14px;font-size:13px;line-height:1.75;color:var(–text);border-left:3px solid var(–blue)}
+.narrative p{margin-bottom:10px}.narrative p:last-child{margin-bottom:0}
+.nh{color:var(–blue);font-weight:700}
+.ng{color:var(–green-text);font-weight:700}
+.nr{color:var(–red-text);font-weight:700}
+.ny{color:var(–yellow-text);font-weight:700}
+.no{color:var(–orange-text);font-weight:700}
+
+/* ── PRICE LEVELS ── */
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.level{background:var(–panel2);border-radius:12px;padding:12px;text-align:center;border:1px solid var(–line)}
+.level .lk{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(–muted);font-weight:700;margin-bottom:6px}
+.level .lv{font-size:17px;font-weight:900;font-family:monospace}
+
+/* ── CHART ── */
+.chart-wrap{position:relative;height:300px;margin-top:10px}
+
+/* ── SPLIT ALERT ── */
+.split-alert{background:var(–yellow-dim);border:1px solid rgba(245,158,11,.35);border-radius:12px;padding:14px;margin-bottom:12px;display:none}
+.split-alert.show{display:block}
+.split-alert .sa-t{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(–yellow-text);margin-bottom:6px}
+.split-alert p{font-size:12px;color:var(–yellow-text);line-height:1.6}
+
+/* ── SAVED TICKER CARDS ── */
+.ticker-card{background:var(–panel2);border:1px solid var(–line);border-radius:12px;padding:12px;cursor:pointer;transition:all .2s;position:relative}
+.ticker-card:hover{border-color:var(–blue);background:#162236}
+.ticker-card .tc-sym{font-family:monospace;font-size:16px;font-weight:900;color:var(–text);margin-bottom:4px}
+.ticker-card .tc-price{font-size:11px;color:var(–muted);margin-bottom:2px}
+.ticker-card .tc-intrinsic{font-size:12px;font-weight:700;color:var(–blue)}
+.ticker-card .tc-upside{font-size:12px;font-weight:700}
+.ticker-card .tc-verdict{font-size:10px;color:var(–muted);margin-top:4px;text-transform:uppercase;letter-spacing:.04em}
+.ticker-card .tc-del{position:absolute;top:6px;right:8px;font-size:14px;color:var(–muted);cursor:pointer;line-height:1;background:none;border:none;padding:2px 4px}
+.ticker-card .tc-del:hover{color:var(–red-text)}
+.ticker-card .tc-load{width:100%;margin-top:8px;background:rgba(96,165,250,.12);color:var(–blue);border:1px solid rgba(96,165,250,.25);border-radius:7px;padding:5px;font-size:11px;font-weight:700;cursor:pointer}
+.ticker-card .tc-load:hover{background:rgba(96,165,250,.22)}
+.btn-fetch{background:linear-gradient(135deg,#0f3320,#0a2518);color:var(–green-text);border:1px solid rgba(34,197,94,.35);border-radius:10px;padding:9px 13px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+.btn-fetch:hover{border-color:rgba(34,197,94,.7);background:linear-gradient(135deg,#143d26,#0f2d1c)}
+.btn-fetch.loading{opacity:.6;cursor:wait}
+.price-toast{position:fixed;bottom:24px;right:24px;background:var(–green-dim);border:1px solid rgba(34,197,94,.4);color:var(–green-text);padding:12px 18px;border-radius:12px;font-size:13px;font-weight:700;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none}
+.price-toast.show{opacity:1;transform:translateY(0)}
+
+/* ── RESEARCH PANEL ── */
+.btn-research{background:linear-gradient(135deg,#1e3a5f,#0f2d4a);color:#60d4ff;border:1px solid rgba(96,212,255,.4);border-radius:10px;padding:10px 16px;font-weight:900;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s}
+.btn-research:hover{background:linear-gradient(135deg,#254870,#1a3d5c);border-color:rgba(96,212,255,.7)}
+.btn-research.loading{opacity:.7;cursor:wait}
+.research-panel{background:var(–panel);border:1px solid rgba(96,165,250,.25);border-radius:16px;padding:18px;margin-bottom:14px;display:none}
+.research-panel.show{display:block}
+.research-panel h2{color:var(–blue)}
+.research-loading{display:flex;align-items:center;gap:12px;padding:20px;color:var(–muted);font-size:13px}
+.research-spinner{width:18px;height:18px;border:2px solid var(–line);border-top-color:var(–blue);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.research-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.research-card{background:var(–panel2);border:1px solid var(–line);border-radius:12px;padding:14px}
+.research-card h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(–muted);font-weight:900;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(–line)}
+.research-card p,.research-card li{font-size:13px;color:var(–text);line-height:1.7;margin-bottom:6px}
+.research-card ul{padding-left:16px}
+.research-card li{margin-bottom:4px}
+.research-card .tag{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700;margin:2px}
+.tag-green{background:var(–green-dim);color:var(–green-text)}
+.tag-red{background:var(–red-dim);color:var(–red-text)}
+.tag-yellow{background:var(–yellow-dim);color:var(–yellow-text)}
+.tag-blue{background:var(–blue-dim);color:#c8ddff}
+.tag-orange{background:var(–orange-dim);color:var(–orange-text)}
+.research-full{background:var(–panel2);border:1px solid var(–line);border-radius:12px;padding:14px;font-size:13px;color:var(–text);line-height:1.75}
+.research-full strong{color:var(–blue)}
+.research-error{background:var(–red-dim);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;color:var(–red-text);font-size:13px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){.grid,.split,.four{grid-template-columns:1fr}}
+@media(max-width:700px){.compact,.cards,.levels{grid-template-columns:1fr 1fr}.wrap{padding:12px}.metric .v{font-size:22px}}
+@media(max-width:500px){.compact,.cards,.levels,.wide{grid-template-columns:1fr}}
+</style>
+
+</head>
+<body>
+<div class="price-toast" id="priceToast"></div>
+<div class="wrap">
+
+<div class="hero">
+  <h1>📊 Institutional Dashboard v3</h1>
+  <div class="sub">Split detection · 4-method valuation · Rich narrative · Live price fetch · AI stock research</div>
+</div>
+
+<div class="grid">
+<!-- ════════════ LEFT: INPUTS ════════════ -->
+<section class="panel">
+  <h2>Inputs</h2>
+
+  <div class="preset-wrap">
+    <button class="preset" onclick="loadPreset('NOW')">NOW</button>
+    <button class="preset" onclick="loadPreset('META')">META</button>
+    <button class="preset" onclick="loadPreset('MSFT')">MSFT</button>
+    <button class="preset" onclick="loadPreset('AMZN')">AMZN</button>
+    <button class="preset" onclick="loadPreset('CRWD')">CRWD</button>
+    <button class="preset" onclick="loadPreset('NBIS')">NBIS</button>
+    <button class="preset" onclick="loadPreset('CSL')">CSL</button>
+    <button class="preset" onclick="resetForm()">Clear</button>
+  </div>
+
+  <div class="helper" style="margin-bottom:12px">⚡ Minimum required: Ticker, Price, EPS, EPS Growth %, Revenue Growth %. Everything else improves accuracy.</div>
+
+  <div class="wide" style="margin-bottom:10px">
+    <div>
+      <label>Ticker</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="ticker" placeholder="e.g. NOW" style="flex:1">
+        <button class="btn-fetch" id="fetchBtn" onclick="fetchPrice()" title="Fetch live price via Claude AI">
+          <span id="fetchIcon">⚡</span> Fetch Price
+        </button>
+      </div>
+    </div>
+    <div>
+      <label>Current Share Price ($) <span id="priceSource" style="font-size:10px;color:var(--green-text);font-weight:700"></span></label>
+      <input id="price" type="number" step="0.01" placeholder="e.g. 102">
+    </div>
+  </div>
+
+  <div class="helper">EPS — ⚠ If EPS seems very high vs price (e.g. EPS $17 but price $102), a stock split may have occurred. Enter as-filed and the tool auto-detects.</div>
+  <div class="compact" style="margin-top:10px">
+    <div><label>Current EPS ($)</label><input id="eps" type="number" step="0.01" placeholder="e.g. 3.60"></div>
+    <div><label>EPS Growth %</label><input id="epsGrowth" type="number" step="0.1" placeholder="e.g. 17"></div>
+    <div><label>Forward EPS ($)</label><input id="fwdEps" type="number" step="0.01" placeholder="Optional"></div>
+  </div>
+
+  <div class="helper" style="margin-top:10px">Revenue</div>
+  <div class="compact" style="margin-top:8px">
+    <div><label>Total Revenue ($B)</label><input id="revTotal" type="number" step="0.01" placeholder="e.g. 13.28"></div>
+    <div><label>Revenue Growth %</label><input id="revGrowth" type="number" step="0.1" placeholder="e.g. 20"></div>
+    <div><label>Forward Revenue ($B)</label><input id="fwdRev" type="number" step="0.01" placeholder="Optional"></div>
+  </div>
+
+  <div class="helper" style="margin-top:10px">Balance Sheet</div>
+  <div class="compact" style="margin-top:8px">
+    <div><label>Shares Outstanding (B)</label><input id="sharesOut" type="number" step="0.01" placeholder="e.g. 1.04"></div>
+    <div><label>Total Debt ($B)</label><input id="debt" type="number" step="0.01" placeholder="e.g. 1.49"></div>
+    <div><label>Total Cash ($B)</label><input id="cash" type="number" step="0.01" placeholder="e.g. 6.28"></div>
+  </div>
+
+  <div class="helper" style="margin-top:10px">Valuation Parameters (defaults auto-applied)</div>
+  <div class="compact" style="margin-top:8px">
+    <div><label>FCF Margin %</label><input id="fcfMargin" type="number" step="0.1" placeholder="e.g. 23" value="20"></div>
+    <div><label>Discount Rate %</label><input id="discountRate" type="number" step="0.1" value="10"></div>
+    <div><label>Current P/E (optional)</label><input id="currentPE" type="number" step="0.1" placeholder="Optional"></div>
+    <div><label>Quality Score (1–10)</label><input id="quality" type="number" step="1" value="7"></div>
+    <div><label>Risk Score (1–10)</label><input id="risk" type="number" step="1" value="3"></div>
+    <div><label>Smart AI Mode</label><select id="smartMode"><option value="on" selected>On</option><option value="off">Off</option></select></div>
+  </div>
+
+  <div class="helper" style="margin-top:10px">Future Case (Optional — for 2027+ projection)</div>
+  <div class="compact" style="margin-top:8px">
+    <div><label>Future EPS Growth %</label><input id="futureEpsGrowth" type="number" step="0.1" placeholder="Optional"></div>
+    <div><label>Future Rev Growth %</label><input id="futureRevGrowth" type="number" step="0.1" placeholder="Optional"></div>
+    <div><label>Market Price After News</label><input id="marketPrice" type="number" step="0.01" placeholder="Optional"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="primary" onclick="calculate()">▶ Calculate</button>
+    <button class="btn-research" onclick="runResearch()" id="researchBtn">🔍 Research Stock</button>
+    <button class="secondary" onclick="addToCompare()">+ Compare</button>
+    <button class="secondary" onclick="saveSnapshot()">Save Snapshot</button>
+    <button class="danger" onclick="resetForm()">Reset</button>
+  </div>
+</section>
+
+<!-- ════════════ RIGHT: OUTPUTS ════════════ -->
+
+<section>
+
+  <!-- SPLIT ALERT -->
+
+  <div class="split-alert" id="splitAlert">
+    <div class="sa-t">⚠ Stock Split Detected</div>
+    <p id="splitAlertText"></p>
+  </div>
+
+  <!-- STATUS -->
+
+  <div id="statusBadge" class="status s-blue"><span class="status-dot"></span><span id="statusText">Waiting for calculation</span></div>
+
+  <!-- AI BANNER -->
+
+  <div id="aiBanner" class="banner b-blue">No AI suggestion yet. Run Calculate.</div>
+
+  <!-- HEADLINE 6-UP -->
+
+  <div class="four" style="margin-bottom:12px">
+    <div class="metric"><div class="k">Intrinsic Value</div><div class="v" id="outIntrinsic" style="color:var(--blue)">—</div><div class="vsub">4-method avg</div></div>
+    <div class="metric"><div class="k">Current Price</div><div class="v" id="outPrice">—</div><div class="vsub">Entered price</div></div>
+    <div class="metric"><div class="k">Upside / Downside</div><div class="v" id="outUpside">—</div><div class="vsub">To intrinsic</div></div>
+    <div class="metric"><div class="k">Margin of Safety</div><div class="v" id="outMOS">—</div><div class="vsub">Graham ≥ 33%</div></div>
+  </div>
+  <div class="four" style="margin-bottom:12px">
+    <div class="metric" style="border-color:rgba(96,165,250,.3)">
+      <div class="k">Fair P/E (Calculated)</div>
+      <div class="v c-blue" id="outFairPEDisplay">—</div>
+      <div class="vsub">Auto-calculated from growth + quality</div>
+    </div>
+    <div class="metric" style="border-color:rgba(107,138,173,.3)">
+      <div class="k">Market P/E (Entered)</div>
+      <div class="v" id="outMarketPE">—</div>
+      <div class="vsub">Current market multiple</div>
+    </div>
+    <div class="metric" id="peGapCard" style="border-color:rgba(34,197,94,.3)">
+      <div class="k">P/E Gap</div>
+      <div class="v" id="outPEGap">—</div>
+      <div class="vsub" id="outPEGapLabel">Fair vs Market multiple</div>
+    </div>
+    <div class="metric">
+      <div class="k">Methods Active</div>
+      <div class="v c-blue" id="outMethodsActive">—</div>
+      <div class="vsub">Out of 4 valuation methods</div>
+    </div>
+  </div>
+
+  <!-- PRICE LEVELS -->
+
+  <div class="levels">
+    <div class="level" style="border-color:rgba(34,197,94,.3)"><div class="lk">Strong Buy Below</div><div class="lv" id="lvSB" style="color:var(--green-text)">—</div></div>
+    <div class="level" style="border-color:rgba(96,165,250,.3)"><div class="lk">Fair / Intrinsic Value</div><div class="lv" id="lvFair" style="color:var(--blue)">—</div></div>
+    <div class="level" style="border-color:rgba(239,68,68,.3)"><div class="lk">Overvalued Above</div><div class="lv" id="lvOver" style="color:var(--red-text)">—</div></div>
+  </div>
+
+  <!-- DECISION SIGNAL -->
+
+  <div class="helper">
+    <strong>Decision Signal:</strong> <span id="decisionSignal" class="pill">No signal yet</span>
+    &nbsp;&nbsp;<strong>Applied Mode:</strong> <span id="appliedMode" class="pill">—</span>
+    &nbsp;&nbsp;<strong>Entry Decision:</strong> <span id="entryDecision" class="pill">—</span>
+  </div>
+
+  <!-- SUMMARY -->
+
+  <div id="summaryBox" class="helper" style="margin-top:10px;line-height:1.7">No summary yet.</div>
+</section>
+</div>
+
+<!-- ════════════ 4-METHOD VALUATION ════════════ -->
+
+<section class="panel">
+  <h2>4-Method Valuation</h2>
+  <div class="split">
+  <div>
+    <table class="table">
+      <thead><tr><th>Method</th><th>Status</th><th>Inputs</th><th>Value</th><th>Weight</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">DCF</td>
+          <td><span id="dcfStatus" class="c-muted">—</span></td>
+          <td style="font-size:12px;color:var(--muted)" id="dcfInputs">—</td>
+          <td><span class="mono" id="dcfValue">—</span></td>
+          <td><div class="bar-wrap"><div class="bar-fill" id="dcfBar" style="width:0%;background:var(--blue)"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">EPS Multiple</td>
+          <td><span id="epsStatus" class="c-muted">—</span></td>
+          <td style="font-size:12px;color:var(--muted)" id="epsInputs">—</td>
+          <td><span class="mono" id="epsMultValue">—</span></td>
+          <td><div class="bar-wrap"><div class="bar-fill" id="epsBar" style="width:0%;background:var(--green-text)"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">Revenue (P/S)</td>
+          <td><span id="revStatus" class="c-muted">—</span></td>
+          <td style="font-size:12px;color:var(--muted)" id="revInputs">—</td>
+          <td><span class="mono" id="revMultValue">—</span></td>
+          <td><div class="bar-wrap"><div class="bar-fill" id="revBar" style="width:0%;background:var(--purple-text)"></div></div></td>
+        </tr>
+        <tr>
+          <td class="mono">PEG Ratio</td>
+          <td><span id="pegStatus" class="c-muted">—</span></td>
+          <td style="font-size:12px;color:var(--muted)" id="pegInputs">—</td>
+          <td><span class="mono" id="pegValue">—</span></td>
+          <td><div class="bar-wrap"><div class="bar-fill" id="pegBar" style="width:0%;background:var(--yellow-text)"></div></div></td>
+        </tr>
+        <tr style="background:rgba(96,165,250,.05)">
+          <td class="mono c-blue">AVERAGE</td>
+          <td><span class="c-blue">Consensus</span></td>
+          <td style="font-size:12px;color:var(--muted)">All active methods</td>
+          <td><span class="mono c-blue" id="avgValue">—</span></td>
+          <td><div class="bar-wrap"><div class="bar-fill" style="width:100%;background:var(--blue)"></div></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h3>AI Quality Layer</h3>
+    <table class="table">
+      <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Detected Style</td><td id="aiStyle" class="mono">—</td></tr>
+        <tr><td>Margin Signal</td><td id="marginSignal" class="mono">—</td></tr>
+        <tr><td>EPS Quality</td><td id="epsQuality">—</td></tr>
+        <tr><td>Applied Mode</td><td id="appliedMode2" class="mono c-blue">—</td></tr>
+        <tr><td>EV/Revenue</td><td id="evRevNow" class="mono">—</td></tr>
+        <tr><td>Overvaluation Risk</td><td id="overvaluationRisk">—</td></tr>
+        <tr><td>Institutional Verdict</td><td id="institutionalVerdict" class="mono">—</td></tr>
+        <tr><td>Fair P/E Applied</td><td id="outFairPE" class="mono">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+</section>
+
+<!-- ════════════ SCENARIO + BALANCE SHEET ════════════ -->
+
+<section class="panel">
+  <div class="split">
+  <div>
+    <h2>Scenario Analysis</h2>
+    <div class="four" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="metric"><div class="k">Bear (15x EPS)</div><div class="v c-red" id="bearCase">—</div></div>
+      <div class="metric"><div class="k">Base / Intrinsic</div><div class="v c-blue" id="baseCase">—</div></div>
+      <div class="metric"><div class="k">Bull (45x EPS)</div><div class="v c-green" id="bullCase">—</div></div>
+      <div class="metric"><div class="k">2027 Target</div><div class="v c-purple" id="target2027">—</div></div>
+    </div>
+    <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+  </div>
+  <div>
+    <h2>Balance Sheet Health</h2>
+    <div class="cards" style="margin-bottom:12px">
+      <div class="metric"><div class="k">Net Cash / Debt</div><div class="v" id="netCash">—</div><div class="vsub" id="netCashLabel">—</div></div>
+      <div class="metric"><div class="k">FCF (Annual Est.)</div><div class="v" id="fcfAnnual">—</div><div class="vsub">Free cash flow</div></div>
+      <div class="metric"><div class="k">Debt / Revenue</div><div class="v" id="debtRevRatio">—</div><div class="vsub">Lower is better</div></div>
+      <div class="metric"><div class="k">Cash per Share</div><div class="v" id="cashPerShare">—</div><div class="vsub">Liquidation floor</div></div>
+    </div>
+    <h2 style="margin-top:4px">Entry Decision</h2>
+    <table class="table">
+      <thead><tr><th>Zone</th><th>Price</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>Ideal Entry</td><td id="idealEntry" class="mono c-green">—</td><td style="font-size:12px;color:var(--muted)">Based on required return</td></tr>
+        <tr><td>Aggressive Entry</td><td id="aggressiveEntry" class="mono c-yellow">—</td><td style="font-size:12px;color:var(--muted)">Smaller cushion</td></tr>
+        <tr><td>Deep Value Entry</td><td id="deepValueEntry" class="mono c-blue">—</td><td style="font-size:12px;color:var(--muted)">Maximum margin of safety</td></tr>
+        <tr><td>Expected Return</td><td id="expectedReturn" class="mono">—</td><td style="font-size:12px;color:var(--muted)">Intrinsic vs price</td></tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+</section>
+
+<!-- ════════════ NARRATIVE ════════════ -->
+
+<section class="panel">
+  <h2>Investment Narrative</h2>
+  <div class="narrative" id="narrativeBox">Run calculation to generate narrative.</div>
+</section>
+
+<!-- ════════════ PE SENSITIVITY + PROJECTION ════════════ -->
+
+<section class="panel">
+  <div class="split">
+  <div>
+    <h2>P/E Sensitivity Table</h2>
+    <div class="helper" style="margin-bottom:10px">What the stock is worth at different market multiples — shows the range of outcomes depending on re-rating.</div>
+    <table class="table" id="peTable">
+      <thead><tr><th>P/E Multiple</th><th>Label</th><th>Implied Value</th><th>vs Current Price</th></tr></thead>
+      <tbody id="peTableBody">
+        <tr><td colspan="4" class="c-muted" style="padding:12px">Run Calculate to see P/E sensitivity.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h2>Future Price Projection</h2>
+    <table class="table">
+      <thead><tr><th>Scenario</th><th>2027</th><th>2028</th><th>2029</th></tr></thead>
+      <tbody>
+        <tr><td class="c-red">Bear</td><td id="predBear2027" class="mono">—</td><td id="predBear2028" class="mono">—</td><td id="predBear2029" class="mono">—</td></tr>
+        <tr><td class="c-blue">Base</td><td id="predBase2027" class="mono">—</td><td id="predBase2028" class="mono">—</td><td id="predBase2029" class="mono">—</td></tr>
+        <tr><td class="c-green">Bull</td><td id="predBull2027" class="mono">—</td><td id="predBull2028" class="mono">—</td><td id="predBull2029" class="mono">—</td></tr>
+      </tbody>
+    </table>
+
+```
+<h2 style="margin-top:16px">Historical P/E Context</h2>
+<div class="helper" style="margin-bottom:10px">Enter the stock's historical average P/E to see how current valuation compares to its own history.</div>
+<div class="wide" style="margin-bottom:10px">
+  <div><label>5-Year Avg P/E</label><input id="histPE5yr" type="number" step="0.1" placeholder="e.g. 25 for META"></div>
+  <div><label>10-Year Avg P/E</label><input id="histPE10yr" type="number" step="0.1" placeholder="e.g. 22 for META"></div>
+</div>
+<table class="table" id="histPETable">
+  <thead><tr><th>P/E Anchor</th><th>Multiple</th><th>Implied Value</th><th>vs Current</th></tr></thead>
+  <tbody id="histPEBody">
+    <tr><td colspan="4" class="c-muted" style="padding:12px">Enter historical P/E values above.</td></tr>
+  </tbody>
+</table>
+```
+
+  </div>
+  </div>
+</section>
+
+<!-- ════════════ AI RESEARCH PANEL ════════════ -->
+
+<div class="research-panel" id="researchPanel">
+  <h2>🔍 AI Stock Research — <span id="researchTicker">—</span></h2>
+  <div id="researchContent">
+    <div class="research-loading"><div class="research-spinner"></div>Researching... fetching latest data on contracts, risks, analyst targets and earnings...</div>
+  </div>
+</div>
+
+<!-- ════════════ SAVED TICKERS ════════════ -->
+
+<section class="panel">
+  <h2>📌 Saved Tickers</h2>
+  <div class="helper" style="margin-bottom:12px">Save any stock with all its inputs. Click Load to instantly reload and recalculate.</div>
+  <div class="btn-row" style="margin-bottom:12px">
+    <button class="secondary" onclick="saveTicker()">📌 Save Current Ticker</button>
+    <button class="danger" onclick="clearTickers()">Clear All</button>
+  </div>
+  <div id="savedTickersGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">
+    <div style="color:var(--muted);font-size:12px;padding:8px">No saved tickers yet.</div>
+  </div>
+</section>
+
+<!-- ════════════ COMPARE + SNAPSHOTS ════════════ -->
+
+<section class="panel">
+  <div class="split">
+  <div>
+    <h2>Compare Stocks (max 3)</h2>
+    <div class="btn-row" style="margin-bottom:10px">
+      <button class="secondary" onclick="addToCompare()">+ Add Current</button>
+      <button class="danger" onclick="clearCompare()">Clear</button>
+    </div>
+    <table class="table">
+      <thead><tr><th>Ticker</th><th>Price</th><th>Intrinsic</th><th>Upside</th><th>Verdict</th><th></th></tr></thead>
+      <tbody id="compareBody"><tr><td colspan="6" class="c-muted" style="padding:12px">No stocks added.</td></tr></tbody>
+    </table>
+  </div>
+  <div>
+    <h2>Saved Snapshots</h2>
+    <div class="btn-row" style="margin-bottom:10px">
+      <button class="secondary" onclick="saveSnapshot()">Save Current</button>
+      <button class="danger" onclick="clearSnapshots()">Clear All</button>
+    </div>
+    <table class="table">
+      <thead><tr><th>Ticker</th><th>Saved</th><th>Intrinsic</th><th>Upside</th><th></th></tr></thead>
+      <tbody id="snapshotsBody"><tr><td colspan="5" class="c-muted" style="padding:12px">No snapshots yet.</td></tr></tbody>
+    </table>
+  </div>
+  </div>
+</section>
+
+</div><!-- /wrap -->
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const PROXY_URL = 'https://gnltaamtxuogubsyctcn.supabase.co/functions/v1/claude-proxy';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdubHRhYW10eHVvZ3Vic3ljdGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc0MzA2MjgsImV4cCI6MjA1MzAwNjYyOH0.ygpDd7n9_4BQLT5mWiqKBn4UdLBkMpVHBLHcRWXuRmE';
+
+async function callClaude(body){
+  const res = await fetch(PROXY_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'apikey': SUPABASE_ANON_KEY
+    },
+    body: JSON.stringify(body)
+  });
+  if(!res.ok){
+    const err = await res.text();
+    throw new Error(`Proxy error ${res.status}: ${err}`);
+  }
+  return res.json();
+}
+const presets={
+  NOW:{ticker:'NOW',price:102,eps:3.60,epsGrowth:17,fwdEps:4.20,revTotal:13.28,revGrowth:20,fwdRev:16.0,sharesOut:1.04,debt:1.49,cash:6.28,fcfMargin:23,discountRate:10,currentPE:29,quality:9,risk:2},
+  META:{ticker:'META',price:515,eps:21.24,epsGrowth:15,fwdEps:25.33,revTotal:156.2,revGrowth:12,fwdRev:178,sharesOut:2.54,debt:18.4,cash:70.5,fcfMargin:35,discountRate:10,currentPE:17,quality:9,risk:2},
+  MSFT:{ticker:'MSFT',price:390,eps:11.86,epsGrowth:19,fwdEps:13.70,revTotal:245.1,revGrowth:16,fwdRev:281.7,sharesOut:7.43,debt:112.2,cash:141.2,fcfMargin:30,discountRate:10,currentPE:24,quality:9,risk:2},
+  AMZN:{ticker:'AMZN',price:180,eps:4.85,epsGrowth:20,fwdEps:6.21,revTotal:664.9,revGrowth:15,fwdRev:768.1,sharesOut:10.57,debt:55.4,cash:126.5,fcfMargin:12,discountRate:10,currentPE:24,quality:9,risk:2},
+  CRWD:{ticker:'CRWD',price:423,eps:3.65,epsGrowth:21,fwdEps:3.71,revTotal:3.95,revGrowth:21,fwdRev:4.8,sharesOut:0.255,debt:0.82,cash:5.23,fcfMargin:20,discountRate:10,currentPE:114,quality:8,risk:4},
+  NBIS:{ticker:'NBIS',price:124.64,eps:-0.68,epsGrowth:0,fwdEps:-0.65,revTotal:0.53,revGrowth:350,fwdRev:3.2,sharesOut:0.252,debt:4.34,cash:8.3,fcfMargin:-400,discountRate:10,currentPE:0,quality:7,risk:9},
+  CSL:{ticker:'CSL',price:155,eps:6.20,epsGrowth:13,fwdEps:7.0,revTotal:15.6,revGrowth:5,fwdRev:16.0,sharesOut:0.415,debt:9.6,cash:1.1,fcfMargin:15,discountRate:10,currentPE:27,quality:7,risk:3},
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let mainChart=null;
+let compareList=JSON.parse(localStorage.getItem('ivDashV3Compare')||'[]');
+let snapshots=JSON.parse(localStorage.getItem('ivDashV3Snaps')||'[]');
+let lastResult=null;
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const $=id=>{try{return document.getElementById(id)}catch(e){return null}};
+const set=(id,val)=>{try{const e=$(id);if(e)e.textContent=val}catch(e){}};
+const setHTML=(id,val)=>{try{const e=$(id);if(e)e.innerHTML=val}catch(e){}};
+const getN=id=>{try{const v=$(id)?.value;return(v===''||v==null)?null:parseFloat(v)}catch(e){return null}};
+const fmt$=n=>{try{return n==null||isNaN(n)?'—':'$'+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}catch(e){return'—'}};
+const fmtB=n=>{try{return n==null||isNaN(n)?'—':'$'+Number(n).toFixed(2)+'B'}catch(e){return'—'}};
+const fmtPct=n=>{try{return n==null||isNaN(n)?'—':(n>=0?'+':'')+Number(n).toFixed(1)+'%'}catch(e){return'—'}};
+const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+
+function loadPreset(key){
+  const p=presets[key];if(!p)return;
+  ['ticker','price','eps','epsGrowth','fwdEps','revTotal','revGrowth','fwdRev','sharesOut',
+   'debt','cash','fcfMargin','discountRate','currentPE','quality','risk'].forEach(k=>{
+    const el=$(k);if(el)el.value=p[k]??'';
+  });
+  $('smartMode').value='on';
+  $('futureEpsGrowth').value='';$('futureRevGrowth').value='';$('marketPrice').value='';
+  calculate();
+}
+
+function resetForm(){
+  document.querySelectorAll('input').forEach(e=>e.value='');
+  $('fcfMargin').value='20';$('discountRate').value='10';$('quality').value='7';$('risk').value='3';
+  $('smartMode').value='on';
+  resetOutputs();
+}
+
+function resetOutputs(){
+  ['outIntrinsic','outPrice','outUpside','outMOS','lvSB','lvFair','lvOver',
+   'outFairPEDisplay','outMarketPE','outPEGap','outMethodsActive',
+   'dcfValue','epsMultValue','revMultValue','pegValue','avgValue',
+   'bearCase','baseCase','bullCase','target2027','netCash','fcfAnnual',
+   'debtRevRatio','cashPerShare','idealEntry','aggressiveEntry','deepValueEntry','expectedReturn',
+   'beforeEPS','afterEPS','changeEPS','beforeGrowth','afterGrowth','changeGrowth',
+   'beforePE','afterPE','changePE','beforeIV','afterIV','changeIV',
+   'predBear2027','predBear2028','predBear2029','predBase2027','predBase2028','predBase2029',
+   'predBull2027','predBull2028','predBull2029',
+   'aiStyle','marginSignal','epsQuality','appliedMode','appliedMode2','evRevNow',
+   'overvaluationRisk','institutionalVerdict','outFairPE','decisionSignal','entryDecision',
+   'netCashLabel'].forEach(id=>set(id,'—'));
+  $('statusBadge').className='status s-blue';
+  $('statusText').textContent='Waiting for calculation';
+  $('aiBanner').className='banner b-blue';
+  $('aiBanner').textContent='No AI suggestion yet. Run Calculate.';
+  $('narrativeBox').textContent='Run calculation to generate narrative.';
+  $('splitAlert').classList.remove('show');
+  ['dcfBar','epsBar','revBar','pegBar'].forEach(id=>{const e=$(id);if(e)e.style.width='0%'});
+  if(mainChart){mainChart.destroy();mainChart=null}
+}
+
+// ── SPLIT DETECTION ───────────────────────────────────────────────────────────
+function detectSplit(eps,price){
+  if(!eps||!price||eps<=0||price<=0)return{detected:false,ratio:1,adjEps:eps};
+  if(eps>price*0.3&&eps>5){
+    for(const r of[2,3,4,5,10,20]){
+      const adj=eps/r,pe=price/adj;
+      if(pe>5&&pe<200)return{detected:true,ratio:r,adjEps:adj,
+        msg:`EPS $${eps.toFixed(2)} vs price ${fmt$(price)} implies a ${r}:1 split. Auto-adjusted to split-adjusted EPS $${adj.toFixed(2)} (implied P/E ${pe.toFixed(1)}x). All 4 methods use the adjusted figure.`};
+    }
+  }
+  if(price/eps<3&&price/eps>0){
+    const r=Math.max(2,Math.round(1/(price/eps)));
+    return{detected:true,ratio:r,adjEps:eps/r,msg:`Implied P/E of ${(price/eps).toFixed(1)}x is abnormally low — possible ${r}:1 split detected. EPS adjusted.`};
+  }
+  return{detected:false,ratio:1,adjEps:eps};
+}
+
+// ── FAIR MULTIPLES ────────────────────────────────────────────────────────────
+function fairPE(epsG,revG,q,risk,currentPE){
+  let b=15;
+  if(revG>=25)b+=15;else if(revG>=20)b+=12;else if(revG>=15)b+=8;else if(revG>=10)b+=5;else b+=2;
+  b+=(q-5)*1.5;b-=(risk-3)*2;
+  if(currentPE&&currentPE>0)b=b*0.6+currentPE*0.4;
+  if(revG<10)b=Math.min(b,22);
+  if(revG>=20)b=Math.min(b,50);
+  return Math.max(8,b);
+}
+function fairPS(revG,q,risk){
+  let b=4;
+  if(revG>=200)b=25;else if(revG>=50)b=18;else if(revG>=25)b=14;else if(revG>=20)b=11;else if(revG>=15)b=8;else if(revG>=10)b=6;
+  b+=(q-5)*0.5;b-=(risk-3)*0.5;
+  return Math.max(2,b);
+}
+
+// ── DCF ───────────────────────────────────────────────────────────────────────
+function calcDCF(fcf,revG,dr,shares){
+  if(!fcf||fcf<=0||!shares||shares<=0)return null;
+  const g1=Math.min(revG/100,0.35),g2=g1*0.6,gT=0.04,r=dr/100;
+  let pv=0,cf=fcf;
+  for(let i=1;i<=5;i++){cf*=(1+g1);pv+=cf/Math.pow(1+r,i)}
+  for(let i=6;i<=10;i++){cf*=(1+g2);pv+=cf/Math.pow(1+r,i)}
+  const tv=(cf*(1+gT))/(r-gT);
+  pv+=tv/Math.pow(1+r,10);
+  return pv/shares;
+}
+
+// ── MAIN CALCULATE ────────────────────────────────────────────────────────────
+function calculate(){
+  try{ _calculate(); }catch(e){ console.log('Calculate error:',e.message,e.stack); alert('Calculation error: '+e.message); }
+}
+function _calculate(){
+  const ticker=($('ticker').value.trim()||'STOCK').toUpperCase();
+  const price=getN('price');
+  let eps=getN('eps');
+  const epsGrowth=getN('epsGrowth')??0;
+  let fwdEps=getN('fwdEps');
+  const revTotal=getN('revTotal');
+  const revGrowth=getN('revGrowth')??0;
+  const fwdRev=getN('fwdRev');
+  const sharesOut=getN('sharesOut');
+  const debt=getN('debt')??0;
+  const cash=getN('cash')??0;
+  const fcfMarginPct=getN('fcfMargin')??20;
+  const dr=getN('discountRate')??10;
+  const currentPE=getN('currentPE');
+  const q=getN('quality')??7;
+  const risk=getN('risk')??3;
+  const futEpsG=getN('futureEpsGrowth');
+  const futRevG=getN('futureRevGrowth');
+  const marketPrice=getN('marketPrice');
+
+  if(price==null||isNaN(price)||eps==null||isNaN(eps)){
+    alert('Please enter at least: Price, EPS, EPS Growth %, and Revenue Growth %.');return;
+  }
+
+  // ── HYPERGROWTH / PRE-PROFIT MODE ──
+  const isPreProfit=eps<=0;
+  const isHyper=revGrowth>=100;
+  const revenueMode=isPreProfit||isHyper;
+
+  // ── SPLIT DETECTION ──
+  const split=isPreProfit?{detected:false,ratio:1,adjEps:eps}:detectSplit(eps,price);
+  if(split.detected){
+    eps=split.adjEps;
+    if(fwdEps)fwdEps=fwdEps/split.ratio;
+    $('splitAlert').classList.add('show');
+    set('splitAlertText',split.msg);
+    $('aiBanner').className='banner b-yellow';
+    $('aiBanner').textContent='⚠ Split detected — EPS auto-adjusted. See alert above.';
+  } else {
+    $('splitAlert').classList.remove('show');
+    if(!revenueMode){
+      $('aiBanner').className='banner b-blue';
+      $('aiBanner').textContent=`No split detected. Implied P/E ${(price/eps).toFixed(1)}x — within normal range. All 4 methods active.`;
+    }
+  }
+
+  // ── WORKING VALUES ──
+  const wEps=fwdEps??eps*(1+(epsGrowth/100));
+  const wRev=fwdRev??(revTotal?(revTotal*(1+revGrowth/100)):null);
+  const fcf=revTotal&&fcfMarginPct>0?revTotal*(fcfMarginPct/100):null;
+
+  // ── GROWTH OVERRIDE — use implied growth if fwd revenue contradicts entered growth ──
+  let effectiveRevGrowth=revGrowth;
+  let growthOverrideMsg='';
+  if(revTotal&&revTotal>0&&fwdRev&&fwdRev>0){
+    const impliedGrowth=((fwdRev-revTotal)/revTotal)*100;
+    // If entered growth and implied growth diverge by more than 5 percentage points — use implied
+    if(Math.abs(impliedGrowth-revGrowth)>5){
+      effectiveRevGrowth=impliedGrowth;
+      growthOverrideMsg=`⚠ Growth Override: Entered ${revGrowth.toFixed(1)}% but forward revenue $${fwdRev.toFixed(1)}B vs current $${revTotal.toFixed(1)}B implies actual growth of ${impliedGrowth.toFixed(1)}%. Using ${impliedGrowth.toFixed(1)}% for valuation.`;
+    }
+  }
+  const fp=fairPE(epsGrowth,effectiveRevGrowth,q,risk,currentPE);
+  const fps=fairPS(effectiveRevGrowth,q,risk);
+
+  // ── 4 METHODS ──
+  // DCF
+  let dcfVal=null,dcfOk=false;
+  if(!revenueMode&&fcf&&fcf>0){dcfVal=calcDCF(fcf,effectiveRevGrowth,dr,sharesOut);dcfOk=dcfVal!==null}
+
+  // EPS Multiple
+  let epsVal=null,epsOk=false;
+  if(!revenueMode&&wEps>0){epsVal=wEps*fp;epsOk=true}
+
+  // Revenue P/S
+  let revVal=null,revOk=false;
+  if(wRev&&sharesOut&&sharesOut>0){revVal=(wRev*fps)/sharesOut;revOk=true}
+
+  // PEG
+  let pegVal=null,pegOk=false;
+  if(!revenueMode&&wEps>0&&epsGrowth>0){
+    const pm=effectiveRevGrowth>=20?2.2:effectiveRevGrowth>=15?2.0:1.8;
+    pegVal=wEps*Math.min(pm*epsGrowth,60);pegOk=true;
+  }
+
+  // Average
+  const active=[dcfVal,epsVal,revVal,pegVal].filter(v=>v!=null&&!isNaN(v)&&v>0);
+  if(!active.length){alert('Not enough data. Please add more inputs.');return}
+  const intrinsic=active.reduce((a,b)=>a+b,0)/active.length;
+  const maxV=Math.max(...active);
+
+  // ── METHOD OUTPUT ──
+  set('dcfStatus',dcfOk?'✓ Active':'✗ N/A');$(  'dcfStatus').className=dcfOk?'c-green':'c-na';
+  set('epsStatus',epsOk?'✓ Active':isPreProfit?'✗ Pre-profit':'✗ N/A');$('epsStatus').className=epsOk?'c-green':'c-na';
+  set('revStatus',revOk?'✓ Active':'✗ Need data');$('revStatus').className=revOk?'c-green':'c-na';
+  set('pegStatus',pegOk?'✓ Active':isPreProfit?'✗ Pre-profit':'✗ N/A');$('pegStatus').className=pegOk?'c-green':'c-na';
+
+  set('dcfInputs',dcfOk?`FCF $${fcf?.toFixed(1)}B, r=${dr}%, g=${revGrowth}%`:'FCF negative or missing');
+  set('epsInputs',epsOk?`Fwd EPS $${wEps.toFixed(2)} × ${fp.toFixed(1)}x P/E`:isPreProfit?'EPS negative — not applicable':'Enter EPS data');
+  set('revInputs',revOk?`$${wRev?.toFixed(1)}B × ${fps.toFixed(1)}x P/S ÷ ${sharesOut}B sh`:'Enter fwd rev + shares');
+  set('pegInputs',pegOk?`EPS $${wEps.toFixed(2)} × PEG ${(revGrowth>=20?2.2:2.0).toFixed(1)}x × ${epsGrowth}%`:isPreProfit?'EPS negative — not applicable':'Enter EPS growth');
+
+  set('dcfValue',dcfOk?fmt$(dcfVal):'N/A');
+  set('epsMultValue',epsOk?fmt$(epsVal):'N/A');
+  set('revMultValue',revOk?fmt$(revVal):'N/A');
+  set('pegValue',pegOk?fmt$(pegVal):'N/A');
+  set('avgValue',fmt$(intrinsic));
+
+  if(dcfOk)$('dcfBar').style.width=(dcfVal/maxV*100)+'%';
+  if(epsOk)$('epsBar').style.width=(epsVal/maxV*100)+'%';
+  if(revOk)$('revBar').style.width=(revVal/maxV*100)+'%';
+  if(pegOk)$('pegBar').style.width=(pegVal/maxV*100)+'%';
+
+  // ── UPSIDE / MOS ──
+  const upside=((intrinsic-price)/price)*100;
+  const mos=((intrinsic-price)/intrinsic)*100;
+
+  // ── SCENARIOS ──
+  const bearV=wEps>0?wEps*15:intrinsic*0.5;
+  const bullV=wEps>0?wEps*45:intrinsic*2;
+  const futEG=futEpsG??epsGrowth;
+  const tgt2027=wEps>0?wEps*(1+futEG/100)*fp:wRev&&sharesOut?(wRev*(1+(futRevG??revGrowth)/100)*fps)/sharesOut:null;
+
+  // ── BALANCE SHEET ──
+  const netCash=cash-debt;
+  const cashPS=sharesOut?cash/sharesOut:null;
+  const dRev=revTotal?(debt/revTotal*100):null;
+
+  // ── PRICE LEVELS ──
+  const lvSB=intrinsic*0.65;
+  const lvOver=intrinsic*1.05;
+
+  // ── VERDICT ──
+  let verdict,vClass,vBanner;
+  if(revenueMode){verdict='SPECULATIVE / REVENUE MODE';vClass='s-orange';vBanner='b-orange'}
+  else if(price<=lvSB){verdict='STRONG BUY';vClass='s-green';vBanner='b-green'}
+  else if(price<=intrinsic*0.85){verdict='BUY ZONE';vClass='s-green';vBanner='b-green'}
+  else if(price<=intrinsic*1.05){verdict='FAIRLY VALUED';vClass='s-yellow';vBanner='b-yellow'}
+  else if(price<=intrinsic*1.2){verdict='SLIGHT PREMIUM';vClass='s-yellow';vBanner='b-yellow'}
+  else{verdict='OVERVALUED';vClass='s-red';vBanner='b-red'}
+
+  // ── SET ALL OUTPUTS ──
+  set('outIntrinsic',fmt$(intrinsic));
+  set('outPrice',fmt$(price));
+
+  // Fair PE display
+  set('outFairPEDisplay', revenueMode ? 'Rev Mode' : fp.toFixed(1)+'x');
+
+  // Market PE display
+  const mktPE = currentPE && currentPE > 0 ? currentPE : (wEps > 0 ? price/wEps : null);
+  set('outMarketPE', mktPE ? mktPE.toFixed(1)+'x' : '—');
+
+  // PE Gap — is market cheap or expensive vs fair PE?
+  if(!revenueMode && mktPE && fp){
+    const peGap = fp - mktPE;
+    const peGapEl = $('outPEGap');
+    const peGapCard = $('peGapCard');
+    set('outPEGap', (peGap >= 0 ? '+' : '') + peGap.toFixed(1)+'x');
+    if(peGapEl) peGapEl.className = 'v ' + (peGap > 3 ? 'c-green' : peGap < -3 ? 'c-red' : 'c-yellow');
+    if(peGapCard) peGapCard.style.borderColor = peGap > 3 ? 'rgba(34,197,94,.3)' : peGap < -3 ? 'rgba(239,68,68,.3)' : 'rgba(245,158,11,.3)';
+    set('outPEGapLabel', peGap > 3 ? 'Market undervaluing ↑' : peGap < -3 ? 'Market overvaluing ↓' : 'Market fairly priced');
+  } else {
+    set('outPEGap', '—');
+    set('outPEGapLabel', revenueMode ? 'Revenue mode active' : 'Enter Current P/E');
+  }
+
+  // Methods active count
+  set('outMethodsActive', active.length + '/4');
+
+  const uEl=$('outUpside');uEl.textContent=fmtPct(upside);
+  uEl.className='v '+(upside>20?'c-green':upside>0?'c-yellow':'c-red');
+  const mEl=$('outMOS');mEl.textContent=mos>0?mos.toFixed(1)+'%':mos.toFixed(1)+'% (premium)';
+  mEl.className='v '+(mos>33?'c-green':mos>15?'c-yellow':'c-red');
+
+  set('lvSB',fmt$(lvSB));set('lvFair',fmt$(intrinsic));set('lvOver',fmt$(lvOver));
+  set('bearCase',fmt$(bearV));set('baseCase',fmt$(intrinsic));set('bullCase',fmt$(bullV));
+  set('target2027',tgt2027?fmt$(tgt2027):'—');
+
+  set('netCash',fmtB(netCash));
+  $('netCash').className='v '+(netCash>=0?'c-green':'c-red');
+  set('netCashLabel',netCash>=0?'✓ Net cash positive':'⚠ Net debt position');
+  set('fcfAnnual',fcf!==null&&fcf>0?fmtB(fcf):'N/A');
+  set('debtRevRatio',dRev!==null?dRev.toFixed(1)+'%':'—');
+  set('cashPerShare',cashPS!==null?fmt$(cashPS):'—');
+
+  const req=15;
+  set('idealEntry',fmt$(intrinsic*(1-req/100)));
+  set('aggressiveEntry',fmt$(intrinsic*(1-Math.max(req-5,0)/100)));
+  set('deepValueEntry',fmt$(intrinsic*(1-(req+10)/100)));
+  const expRet=tgt2027?((tgt2027-price)/price)*100:upside;
+  set('expectedReturn',fmtPct(expRet));
+  $('expectedReturn').className='mono '+(expRet>20?'c-green':expRet>0?'c-yellow':'c-red');
+
+  // AI layer
+  const mode=revenueMode?'P/S Revenue':'P/E';
+  set('aiStyle',revGrowth>=100?'Hyper Growth':revGrowth>=25?'High Growth':revGrowth>=15?'Balanced High':'Balanced');
+  set('marginSignal',epsGrowth&&revGrowth?(epsGrowth-revGrowth).toFixed(1)+'pp':'—');
+  set('epsQuality',split.detected?'Split-Adjusted':isPreProfit?'Negative / Pre-Profit':'Normal');
+  set('appliedMode',mode);set('appliedMode2',mode);
+  set('outFairPE',revenueMode?'Revenue Mode':fp.toFixed(1)+'x');
+  const evRev=revTotal&&(price*sharesOut||null)?(((price*(sharesOut??0))+debt-cash)/revTotal):null;
+  set('evRevNow',evRev!==null?evRev.toFixed(1)+'x':'—');
+  set('overvaluationRisk',revenueMode?'Speculative':mos>33?'Low':mos>0?'Medium':'High');
+  set('institutionalVerdict',verdict);
+  set('decisionSignal',verdict);
+  $('decisionSignal').className='pill';
+
+  const entryD=expRet>20?'Strong Buy':expRet>=12?'Buy':expRet>=6?'Hold':'Avoid / Wait';
+  set('entryDecision',entryD);
+
+  // Before/After
+  set('beforeEPS',fmt$(wEps));set('afterEPS',fmt$(wEps*(1+(futEpsG??epsGrowth)/100)));
+  set('changeEPS',fmtPct(futEpsG??epsGrowth));
+  set('beforeGrowth',epsGrowth.toFixed(1)+'%');set('afterGrowth',(futEpsG??epsGrowth).toFixed(1)+'%');
+  set('changeGrowth',futEpsG?fmtPct(futEpsG-epsGrowth):'—');
+  set('beforePE',revenueMode?'Rev Mode':fp.toFixed(1)+'x');set('afterPE',revenueMode?'Rev Mode':fp.toFixed(1)+'x');
+  set('changePE','—');
+  set('beforeIV',fmt$(intrinsic));set('afterIV',tgt2027?fmt$(tgt2027):'—');
+  set('changeIV',tgt2027?fmtPct(((tgt2027-intrinsic)/intrinsic)*100):'—');
+
+  // Projections
+  const b=intrinsic*.85,u=intrinsic*1.15;
+  set('predBear2027',fmt$(b));set('predBear2028',fmt$(b*1.05));set('predBear2029',fmt$(b*1.10));
+  set('predBase2027',fmt$(intrinsic));set('predBase2028',fmt$(intrinsic*1.06));set('predBase2029',fmt$(intrinsic*1.12));
+  set('predBull2027',fmt$(u));set('predBull2028',fmt$(u*1.06));set('predBull2029',fmt$(u*1.12));
+
+  // Status + banner
+  $('statusBadge').className='status '+vClass;
+  set('statusText',`${ticker} • ${verdict} • ${fmtPct(upside)} to intrinsic`);
+  $('aiBanner').className='banner '+(split.detected?'b-yellow':growthOverrideMsg?'b-yellow':vBanner);
+  if(growthOverrideMsg){
+    $('aiBanner').textContent=growthOverrideMsg;
+  } else if(!split.detected){
+    $('aiBanner').textContent=buildAIComment(revenueMode,isPreProfit,effectiveRevGrowth,epsGrowth,upside,mos,active.length);
+  }
+
+  // Narrative
+  buildNarrative(ticker,price,intrinsic,upside,mos,effectiveRevGrowth,epsGrowth,wEps,fp,fps,netCash,split,revenueMode,isPreProfit,active.length,verdict,tgt2027,revTotal??0,wRev??0,debt,cash,q,risk);
+
+  // Summary
+  $('summaryBox').innerHTML=`<strong>Mode:</strong> ${mode} &nbsp;|&nbsp; <strong>Intrinsic:</strong> ${fmt$(intrinsic)} &nbsp;|&nbsp; <strong>Upside:</strong> ${fmtPct(upside)} &nbsp;|&nbsp; <strong>MOS:</strong> ${mos.toFixed(1)}% &nbsp;|&nbsp; <strong>Verdict:</strong> ${verdict} &nbsp;|&nbsp; <strong>Methods active:</strong> ${active.length}/4`;
+
+  // Chart
+  renderChart(ticker,price,bearV,intrinsic,bullV,tgt2027);
+
+  // PE Sensitivity Table
+  renderPETable(wEps, fp, price, revenueMode);
+  renderHistPETable(wEps, price);
+
+  lastResult={ticker,price,intrinsic,upside,mos,verdict,revGrowth,epsGrowth,tgt2027,fwdEps:wEps,eps};
+  renderCompare();renderSnapshots();
+}
+
+function buildAIComment(revenueMode,isPreProfit,revG,epsG,upside,mos,methods){
+  if(revenueMode&&isPreProfit)return`⚡ Pre-profit detected. EPS/DCF/PEG methods disabled. Revenue P/S is the sole anchor. This is a speculative, venture-style analysis — not traditional intrinsic value.`;
+  if(revenueMode)return`⚡ Hyper-growth detected (${revG}% revenue growth). Revenue Mode primary. Standard EPS multiples capped.`;
+  if(upside>30&&mos>33)return`✅ Strong buy signal. ${methods}/4 methods active. ${mos.toFixed(1)}% margin of safety exceeds Graham's 33% threshold.`;
+  if(upside>10)return`📈 Buy zone. ${methods}/4 methods active. Price below intrinsic with moderate margin of safety.`;
+  if(upside>-5)return`⚖ Fairly valued. Price near intrinsic. Hold or wait for better entry.`;
+  return`⚠ Price above intrinsic value. Limited margin of safety. Consider waiting for a pullback.`;
+}
+
+// ── NARRATIVE ─────────────────────────────────────────────────────────────────
+function buildNarrative(ticker,price,intrinsic,upside,mos,revG,epsG,fwdEps,fp,fps,netCash,split,revenueMode,isPreProfit,methods,verdict,tgt2027){
+  const uAbs=Math.abs(upside).toFixed(1);
+  const dir=upside>0?'below':'above';
+  const sent=upside>30?'significantly undervalued':upside>10?'modestly undervalued':upside>-5?'fairly valued':'overvalued';
+
+  // ── SMART FLAGS ──────────────────────────────────────────────────────────────
+  const flags=[];
+
+  // EPS volatility flag — high growth swings suggest lumpy/non-recurring earnings
+  if(Math.abs(epsG)>40&&!isPreProfit){
+    flags.push(`<p><span class="nr">⚠ EPS Volatility:</span> EPS growth of <span class="nr">${epsG>0?'+':''}${epsG.toFixed(0)}%</span> is unusually large — likely driven by one-time charges, impairments, or settlements rather than operational performance. <strong>Anchor valuation on adjusted EPS, not GAAP.</strong> Strip out the noise before applying any multiple.</p>`);
+  }
+
+  // Revenue contraction flag
+  const revTotal=getN('revTotal');
+  const fwdRev=getN('fwdRev');
+  if(revTotal&&fwdRev&&fwdRev<revTotal){
+    flags.push(`<p><span class="nr">⚠ Revenue Contraction:</span> Forward revenue of <span class="nr">${fmtB(fwdRev)}</span> is below current year's <span class="nr">${fmtB(revTotal)}</span> — the top line is expected to <strong>shrink</strong>. This is the market's core concern and justifies a lower multiple. This is not a growth stock at current guidance.</p>`);
+  }
+
+  // Growth plateau flag
+  if(revG>0&&revG<5&&!isPreProfit){
+    flags.push(`<p><span class="ny">⚠ Growth Plateau:</span> Revenue growing at only <span class="ny">${revG.toFixed(1)}%</span> — effectively inflation-level growth. This is a <strong>value/yield profile, not a growth play.</strong> The market will price this at a lower multiple than peers with 10%+ growth.</p>`);
+  }
+
+  // Heavy net debt flag
+  const debt=getN('debt')??0;
+  const cash=getN('cash')??0;
+  if(revTotal&&netCash<0&&Math.abs(netCash)/revTotal>0.4){
+    flags.push(`<p><span class="ny">⚠ Leveraged Balance Sheet:</span> Net debt of <span class="ny">${fmtB(Math.abs(netCash))}</span> represents <span class="ny">${(Math.abs(netCash)/revTotal*100).toFixed(0)}% of revenue</span>. Not dangerous but limits financial flexibility. Monitor debt service relative to free cash flow.</p>`);
+  }
+
+  // Cash declining flag
+  if(cash>0&&debt>0&&netCash<0&&cash<debt*0.4){
+    flags.push(`<p><span class="ny">⚠ Cash Position Thin:</span> Cash of <span class="ny">${fmtB(cash)}</span> is less than 40% of total debt. The company is likely returning capital via buybacks/dividends rather than investing in growth — suggests limited high-return reinvestment opportunities.</p>`);
+  }
+
+  // EPS growing faster than revenue — buyback/margin driven
+  if(!isPreProfit&&epsG>0&&revG>0&&epsG>revG+15){
+    flags.push(`<p><span class="ny">⚠ EPS Outpacing Revenue:</span> EPS growing <span class="ny">${epsG.toFixed(0)}%</span> vs revenue growing <span class="ny">${revG.toFixed(0)}%</span> — the gap suggests EPS growth is driven by <strong>buybacks or margin expansion</strong>, not top-line growth. This is lower quality than revenue-led EPS growth and has limits.</p>`);
+  }
+
+  // High quality compounder flag
+  const q=getN('quality')??7;
+  const risk=getN('risk')??3;
+  if(q>=8&&risk<=3&&revG>=15&&!isPreProfit&&netCash>=0){
+    flags.push(`<p><span class="ng">✅ Quality Compounder:</span> High quality score (${q}/10), low risk (${risk}/10), net cash positive, and revenue growing ${revG.toFixed(0)}% — this is a <strong>premium business deserving a premium multiple</strong>. The fair P/E of ${fp.toFixed(1)}x is justified by the business quality, not just growth.</p>`);
+  }
+
+  // Pre-profit speculative flag
+  if(isPreProfit){
+    flags.push(`<p><span class="no">⚡ Pre-Profit:</span> EPS is negative. DCF, EPS Multiple, and PEG methods are not applicable. Valuation anchored on Revenue P/S only. <strong>This is a speculative, venture-style analysis.</strong> Position sizing critical — 3-5% maximum.</p>`);
+  }
+
+  // Split detection
+  if(split.detected){
+    flags.push(`<p><span class="ny">⚠ Stock Split Detected:</span> ${split.msg}</p>`);
+  }
+
+  // ── EPS PROFILE ──────────────────────────────────────────────────────────────
+  let epsProfile='';
+  if(!isPreProfit&&!revenueMode){
+    const epsQuality=Math.abs(epsG)>40?'lumpy and non-recurring':epsG>20?'strong compounding':epsG>10?'solid growth':'modest';
+    epsProfile=`EPS forecast at <span class="nh">$${fwdEps?.toFixed(2)}</span> with ${epsQuality} growth of <span class="nh">${epsG>0?'+':''}${epsG.toFixed(1)}%</span>. Fair P/E of <span class="nh">${fp.toFixed(1)}x</span> applied.`;
+  }
+
+  // ── REVENUE PROFILE ───────────────────────────────────────────────────────────
+  const revProfile=revG>=20?`Revenue growing at <span class="ng">${revG.toFixed(1)}%</span> — high growth profile supporting premium multiple.`
+    :revG>=10?`Revenue growing at <span class="nh">${revG.toFixed(1)}%</span> — solid compounding growth.`
+    :revG>=5?`Revenue growing at <span class="ny">${revG.toFixed(1)}%</span> — moderate growth limiting multiple expansion.`
+    :revG>0?`Revenue growing at only <span class="ny">${revG.toFixed(1)}%</span> — effectively stalling. Value/yield profile.`
+    :`<span class="nr">Revenue declining ${Math.abs(revG).toFixed(1)}%</span> — contraction year. Significant re-rating risk.`;
+
+  // ── BALANCE SHEET PROFILE ─────────────────────────────────────────────────────
+  const balProfile=netCash>=0
+    ?`<span class="ng">Net cash positive ($${Math.abs(netCash).toFixed(1)}B)</span> — fortress balance sheet.`
+    :Math.abs(netCash)<5?`<span class="ny">Net debt $${Math.abs(netCash).toFixed(1)}B</span> — manageable leverage.`
+    :`<span class="nr">Net debt $${Math.abs(netCash).toFixed(1)}B</span> — significant leverage. Monitor cash generation.`;
+
+  // ── VALUATION PROFILE ─────────────────────────────────────────────────────────
+  const valProfile=upside>30?`At <span class="ng">${uAbs}% below intrinsic</span>, this represents a compelling entry. Risk/reward strongly favours buyers.`
+    :upside>10?`At <span class="nh">${uAbs}% below intrinsic</span>, there is meaningful upside with adequate margin of safety.`
+    :upside>-5?`Trading near intrinsic value. Fairly priced — hold existing positions, wait for a better entry.`
+    :`At <span class="nr">${uAbs}% above intrinsic</span>, the stock is pricing in optimistic outcomes. Limited margin of safety.`;
+
+  // ── MOS ───────────────────────────────────────────────────────────────────────
+  const mosNote=mos>33?`Margin of safety <span class="ng">${mos.toFixed(1)}%</span> — exceeds Graham's 33% threshold.`
+    :mos>0?`Margin of safety <span class="ny">${mos.toFixed(1)}%</span> — below Graham's 33% threshold.`
+    :`<span class="nr">${Math.abs(mos).toFixed(1)}% premium</span> to intrinsic — no margin of safety.`;
+
+  // ── VERDICT COMMENT ───────────────────────────────────────────────────────────
+  const verdictDetail=getVerdictComment(verdict,upside,mos,revG,isPreProfit);
+
+  // ── 2027 TARGET ───────────────────────────────────────────────────────────────
+  const tgtNote=tgt2027?`<p>Based on earnings delivery alone (no multiple expansion required), the 2027 target is <span class="nh">${fmt$(tgt2027)}</span> — implying <span class="${((tgt2027-price)/price)*100>0?'ng':'nr'}">${fmtPct(((tgt2027-price)/price)*100)}</span> from current price.</p>`:'';
+
+  // ── POSITIONING ───────────────────────────────────────────────────────────────
+  const positioning=isPreProfit?'Speculative (3–5% max)'
+    :upside>30&&mos>33?'Core position — high conviction'
+    :upside>10?'Accumulate — buy zone'
+    :upside>-5?'Hold — fairly valued'
+    :'Reduce / avoid — overvalued';
+
+  $('narrativeBox').innerHTML=`
+    ${flags.length?`<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line)">${flags.join('')}</div>`:''}
+    <p><strong>${ticker}</strong> is trading at <span class="nh">${fmt$(price)}</span> — <span class="${upside>0?'ng':'nr'}">${uAbs}% ${dir} intrinsic value</span> of <span class="nh">${fmt$(intrinsic)}</span>. The stock is <strong>${sent}</strong>.</p>
+    <p>${revProfile} ${epsProfile}</p>
+    <p>${balProfile} ${mosNote}</p>
+    ${tgtNote}
+    <p><span class="nh">${methods}/4 methods</span> active${methods>=3?' — strong convergence, high confidence.':' — add more inputs for full convergence.'}  Intrinsic value range: <span class="nh">${fmt$(intrinsic*0.85)}</span> (bear) → <span class="nh">${fmt$(intrinsic)}</span> (base) → <span class="nh">${fmt$(intrinsic*1.15)}</span> (bull).</p>
+    <p>${valProfile}</p>
+    <p><strong>Verdict: ${verdict}</strong> — ${verdictDetail}</p>
+    <p style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)"><strong style="color:var(--text)">Suggested positioning:</strong> ${positioning}</p>
+  `;
+}
+
+function getVerdictComment(v,up,mos,revG,isPreProfit){
+  if(isPreProfit)return`Pre-profit company. Position sizing is critical — speculative allocation only (3–5% of portfolio max). Wait for profitability inflection before sizing up.`;
+  if(v==='STRONG BUY')return`Trading at a ${mos.toFixed(1)}% discount. Risk/reward strongly favours buyers. Margin of safety exceeds Graham's 33% threshold.`;
+  if(v==='BUY ZONE')return`Below intrinsic value with adequate safety margin. Suitable for accumulation at current levels.`;
+  if(v==='FAIRLY VALUED')return`Price reflects fair value. Hold existing positions; wait for a pullback for better entry.`;
+  if(v==='SLIGHT PREMIUM')return`Modest premium to intrinsic. Not ideal entry — wait for a pullback toward fair value.`;
+  return`Trading above intrinsic value. Capital better deployed in higher-conviction opportunities.`;
+}
+
+// ── CHART ─────────────────────────────────────────────────────────────────────
+function renderChart(ticker,price,bear,base,bull,tgt){
+  try{
+    const ctx=$('mainChart');
+    if(!ctx)return;
+    if(mainChart){mainChart.destroy();mainChart=null}
+    const labels=['Current','Bear','Intrinsic','Bull','2027 Target'];
+    const data=[price,bear,base,bull,tgt??base];
+    mainChart=new Chart(ctx,{
+      type:'bar',
+      data:{labels,datasets:[{
+        data,
+        backgroundColor:['rgba(107,138,173,.55)','rgba(239,68,68,.55)','rgba(96,165,250,.55)','rgba(34,197,94,.55)','rgba(167,139,250,.55)'],
+        borderColor:['rgba(107,138,173,1)','rgba(239,68,68,1)','rgba(96,165,250,1)','rgba(34,197,94,1)','rgba(167,139,250,1)'],
+        borderWidth:1,borderRadius:8
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw.toFixed(2)}}},
+        scales:{
+          x:{grid:{color:'rgba(34,53,85,.5)'},ticks:{color:'#8aaac8',font:{size:11}}},
+          y:{grid:{color:'rgba(34,53,85,.5)'},ticks:{color:'#8aaac8',font:{size:11},callback:v=>'$'+v.toFixed(0)}}
+        }
+      }
+    });
+  }catch(e){console.log('Chart error:',e.message)}
+}
+
+// ── COMPARE ───────────────────────────────────────────────────────────────────
+function addToCompare(){
+  if(!lastResult){alert('Run a calculation first.');return}
+  const idx=compareList.findIndex(x=>x.ticker===lastResult.ticker);
+  if(idx>=0)compareList[idx]=lastResult;
+  else{if(compareList.length>=3){alert('Max 3 stocks.');return}compareList.push(lastResult)}
+  localStorage.setItem('ivDashV3Compare',JSON.stringify(compareList));
+  renderCompare();
+}
+function removeCompare(i){compareList.splice(i,1);localStorage.setItem('ivDashV3Compare',JSON.stringify(compareList));renderCompare()}
+function clearCompare(){compareList=[];localStorage.setItem('ivDashV3Compare',JSON.stringify(compareList));renderCompare()}
+function renderCompare(){
+  const b=$('compareBody');
+  if(!compareList.length){b.innerHTML='<tr><td colspan="6" class="c-muted" style="padding:12px">No stocks added.</td></tr>';return}
+  b.innerHTML=compareList.map((s,i)=>{
+    const uc=s.upside>20?'c-green':s.upside>0?'c-yellow':'c-red';
+    return`<tr><td class="mono" style="font-weight:900">${s.ticker}</td><td>${fmt$(s.price)}</td><td style="color:var(--blue)">${fmt$(s.intrinsic)}</td><td class="${uc}">${fmtPct(s.upside)}</td><td style="font-size:11px;color:var(--muted)">${s.verdict}</td><td><button onclick="removeCompare(${i})" class="danger" style="padding:4px 8px;font-size:11px">×</button></td></tr>`;
+  }).join('');
+}
+
+// ── SAVED TICKERS ─────────────────────────────────────────────────────────────
+let savedTickers=JSON.parse(localStorage.getItem('ivDashTickers')||'[]');
+
+function saveTicker(){
+  if(!lastResult){alert('Run a calculation first.');return}
+  // Capture all current input values
+  const inputs={};
+  ['ticker','price','eps','epsGrowth','fwdEps','revTotal','revGrowth','fwdRev',
+   'sharesOut','debt','cash','fcfMargin','discountRate','currentPE','quality','risk',
+   'futureEpsGrowth','futureRevGrowth','histPE5yr','histPE10yr'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)inputs[id]=el.value;
+  });
+  inputs.smartMode=document.getElementById('smartMode')?.value||'on';
+
+  const entry={
+    ticker:lastResult.ticker,
+    price:lastResult.price,
+    intrinsic:lastResult.intrinsic,
+    upside:lastResult.upside,
+    verdict:lastResult.verdict,
+    savedAt:new Date().toLocaleDateString(),
+    inputs
+  };
+
+  // Replace if ticker already saved
+  const idx=savedTickers.findIndex(t=>t.ticker===entry.ticker);
+  if(idx>=0)savedTickers[idx]=entry;
+  else savedTickers.unshift(entry);
+
+  localStorage.setItem('ivDashTickers',JSON.stringify(savedTickers));
+  renderTickers();
+  showToast(`✓ ${entry.ticker} saved to watchlist`,'ok');
+}
+
+function loadTicker(idx){
+  const entry=savedTickers[idx];
+  if(!entry)return;
+  // Restore all inputs
+  Object.keys(entry.inputs).forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.value=entry.inputs[id];
+  });
+  const sm=document.getElementById('smartMode');
+  if(sm)sm.value=entry.inputs.smartMode||'on';
+  // Recalculate
+  calculate();
+  // Scroll to top
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function deleteTicker(idx,e){
+  e.stopPropagation();
+  savedTickers.splice(idx,1);
+  localStorage.setItem('ivDashTickers',JSON.stringify(savedTickers));
+  renderTickers();
+}
+
+function clearTickers(){
+  if(!confirm('Clear all saved tickers?'))return;
+  savedTickers=[];
+  localStorage.setItem('ivDashTickers',JSON.stringify(savedTickers));
+  renderTickers();
+}
+
+function renderTickers(){
+  const grid=document.getElementById('savedTickersGrid');
+  if(!grid)return;
+  if(!savedTickers.length){
+    grid.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px">No saved tickers yet.</div>';
+    return;
+  }
+  grid.innerHTML=savedTickers.map((t,i)=>{
+    const uClass=t.upside>20?'c-green':t.upside>0?'c-yellow':'c-red';
+    const upStr=(t.upside>=0?'+':'')+t.upside.toFixed(1)+'%';
+    return`<div class="ticker-card" onclick="loadTicker(${i})">
+      <button class="tc-del" onclick="deleteTicker(${i},event)" title="Remove">×</button>
+      <div class="tc-sym">${t.ticker}</div>
+      <div class="tc-price">$${t.price?.toFixed(2)||'—'}</div>
+      <div class="tc-intrinsic">IV: $${t.intrinsic?.toFixed(2)||'—'}</div>
+      <div class="tc-upside ${uClass}">${upStr}</div>
+      <div class="tc-verdict">${t.verdict||'—'}</div>
+      <div class="tc-price" style="margin-top:4px">${t.savedAt||''}</div>
+      <button class="tc-load">▶ Load</button>
+    </div>`;
+  }).join('');
+}
+function saveSnapshot(){
+  if(!lastResult){alert('Run a calculation first.');return}
+  snapshots.unshift({...lastResult,savedAt:new Date().toLocaleString()});
+  if(snapshots.length>20)snapshots=snapshots.slice(0,20);
+  localStorage.setItem('ivDashV3Snaps',JSON.stringify(snapshots));
+  renderSnapshots();
+}
+function removeSnapshot(i){snapshots.splice(i,1);localStorage.setItem('ivDashV3Snaps',JSON.stringify(snapshots));renderSnapshots()}
+function clearSnapshots(){snapshots=[];localStorage.setItem('ivDashV3Snaps',JSON.stringify(snapshots));renderSnapshots()}
+function renderSnapshots(){
+  const b=$('snapshotsBody');
+  if(!snapshots.length){b.innerHTML='<tr><td colspan="5" class="c-muted" style="padding:12px">No snapshots yet.</td></tr>';return}
+  b.innerHTML=snapshots.map((s,i)=>{
+    const uc=s.upside>20?'c-green':s.upside>0?'c-yellow':'c-red';
+    return`<tr><td class="mono" style="font-weight:900">${s.ticker}</td><td style="font-size:11px;color:var(--muted)">${s.savedAt}</td><td style="color:var(--blue)">${fmt$(s.intrinsic)}</td><td class="${uc}">${fmtPct(s.upside)}</td><td><button onclick="removeSnapshot(${i})" class="danger" style="padding:4px 8px;font-size:11px">×</button></td></tr>`;
+  }).join('');
+}
+
+// ── FETCH LIVE PRICE ─────────────────────────────────────────────────────────
+async function fetchPrice(){
+  const ticker=($('ticker').value.trim()||'').toUpperCase();
+  if(!ticker){alert('Enter a ticker symbol first.');return}
+
+  const btn=$('fetchBtn');
+  const icon=$('fetchIcon');
+  btn.classList.add('loading');
+  icon.textContent='⏳';
+
+  const prompt=`What is the current share price of ${ticker} stock as of today April 2026? Reply with ONLY a JSON object like this, nothing else:
+{"price": 123.45, "currency": "USD", "asOf": "April 9, 2026", "note": "brief context e.g. near 52-week low"}`;
+
+  try{
+    const data=await callClaude({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:200,
+      tools:[{type:'web_search_20250305',name:'web_search'}],
+      messages:[{role:'user',content:prompt}]
+    });
+
+    const texts=data.content?.filter(b=>b.type==='text').map(b=>b.text||'').join('');
+    let price=null,note='';
+    try{
+      const match=texts.match(/\{[\s\S]*?\}/);
+      if(match){const parsed=JSON.parse(match[0]);price=parsed.price;note=parsed.note||'';}
+    }catch(e){}
+    if(!price){const m=texts.match(/\$?([\d,]+\.?\d*)/);if(m)price=parseFloat(m[1].replace(',',''));}
+
+    if(price&&price>0){
+      $('price').value=price.toFixed(2);
+      $('priceSource').textContent='✓ Live fetched';
+      showToast(`✓ ${ticker}: $${price.toFixed(2)}${note?' — '+note:''}`);
+    }else{
+      await fetchPriceFallback(ticker);
+    }
+  }catch(err){
+    showToast(`Fetch failed: ${err.message}. Enter price manually.`,'error');
+  }
+
+  btn.classList.remove('loading');
+  icon.textContent='⚡';
+}
+
+async function fetchPriceFallback(ticker){
+  const prompt=`Based on your knowledge up to August 2025, what was the approximate share price of ${ticker}? Reply ONLY with JSON: {"price": 123.45, "note": "as of [date], verify current price"}`;
+  try{
+    const data=await callClaude({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:150,
+      messages:[{role:'user',content:prompt}]
+    });
+    const text=data.content?.map(b=>b.text||'').join('');
+    const match=text.match(/\{[\s\S]*?\}/);
+    if(match){
+      const parsed=JSON.parse(match[0]);
+      if(parsed.price>0){
+        $('price').value=parsed.price.toFixed(2);
+        $('priceSource').textContent='⚠ Approximate — verify';
+        showToast(`⚠ ${ticker}: ~$${parsed.price.toFixed(2)} (${parsed.note||'verify current price'})`,'warn');
+        return;
+      }
+    }
+  }catch(e){}
+  showToast(`Could not fetch ${ticker} price. Enter manually.`,'error');
+}
+
+function showToast(msg,type='ok'){
+  const t=$('priceToast');
+  t.textContent=msg;
+  t.style.background=type==='error'?'var(--red-dim)':type==='warn'?'var(--yellow-dim)':'var(--green-dim)';
+  t.style.color=type==='error'?'var(--red-text)':type==='warn'?'var(--yellow-text)':'var(--green-text)';
+  t.style.borderColor=type==='error'?'rgba(239,68,68,.4)':type==='warn'?'rgba(245,158,11,.4)':'rgba(34,197,94,.4)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),4000);
+}
+
+// ── AI RESEARCH ───────────────────────────────────────────────────────────────
+async function runResearch(){
+  const ticker=($('ticker').value.trim()||'').toUpperCase();
+  if(!ticker){alert('Please enter a ticker symbol first.');return}
+
+  const btn=$('researchBtn');
+  const panel=$('researchPanel');
+  const content=$('researchContent');
+
+  btn.classList.add('loading');
+  btn.textContent='⏳ Researching...';
+  panel.classList.add('show');
+  set('researchTicker',ticker);
+  content.innerHTML=`<div class="research-loading"><div class="research-spinner"></div>Fetching latest data on ${ticker} — contracts, risks, analyst targets, earnings, news...</div>`;
+
+  const prompt=`You are an institutional equity analyst. Research the stock with ticker "${ticker}" and return a structured JSON object with the following fields. Be specific, factual, and use real data you know. Today is April 2026.
+
+Return ONLY valid JSON, no markdown, no backticks, no preamble:
+
+{
+  "companyName": "Full company name",
+  "sector": "Sector / industry",
+  "businessModel": "2-3 sentence description of how the company makes money",
+  "latestEarnings": {
+    "period": "Q4 2025 or most recent",
+    "revenueActual": "e.g. $3.57B",
+    "revenueGrowth": "e.g. +21% YoY",
+    "epsActual": "e.g. $0.92",
+    "epsBeat": "Beat / Miss / In-line",
+    "keyHighlight": "Most important thing from the earnings"
+  },
+  "contractsAndBacklog": [
+    {"party": "Company or customer name", "value": "Dollar value or description", "type": "Contract type", "significance": "Why it matters"}
+  ],
+  "analystTargets": {
+    "consensus": "Buy / Hold / Sell",
+    "averageTarget": "e.g. $188",
+    "highTarget": "e.g. $260",
+    "lowTarget": "e.g. $115",
+    "numberOfAnalysts": "e.g. 45"
+  },
+  "bullCase": "2-3 sentences — the strongest argument for buying",
+  "bearCase": "2-3 sentences — the strongest argument against buying",
+  "keyRisks": ["Risk 1", "Risk 2", "Risk 3", "Risk 4"],
+  "catalysts": ["Catalyst 1", "Catalyst 2", "Catalyst 3"],
+  "recentNews": [
+    {"headline": "Short headline", "sentiment": "Positive / Negative / Neutral", "impact": "Brief impact description"}
+  ],
+  "verdict": "1-2 sentence overall assessment at current price",
+  "positionSizing": "Recommended portfolio allocation — e.g. Core (5-10%), Satellite (2-5%), Speculative (1-3%)"
+}`;
+
+  try{
+    const data=await callClaude({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1500,
+      messages:[{role:'user',content:prompt}]
+    });
+
+    const raw=data.content?.map(b=>b.text||'').join('').trim();
+
+    let parsed;
+    try{
+      const clean=raw.replace(/```json|```/g,'').trim();
+      parsed=JSON.parse(clean);
+    }catch(e){
+      content.innerHTML=`<div class="research-full">${raw.replace(/\n/g,'<br>')}</div>`;
+      btn.classList.remove('loading');btn.textContent='🔍 Research Stock';return;
+    }
+
+    renderResearch(parsed,ticker);
+
+  }catch(err){
+    content.innerHTML=`<div class="research-error">
+      <strong>⚠ Research failed</strong><br><br>
+      ${err.message.includes('Proxy error')
+        ? 'Supabase proxy error — check the claude-proxy Edge Function is deployed at supabase.com → your project → Edge Functions.'
+        : 'Error: '+err.message
+      }
+    </div>`;
+  }
+
+  btn.classList.remove('loading');
+  btn.textContent='🔍 Research Stock';
+}
+
+function renderResearch(d,ticker){
+  const sentColor=s=>s==='Positive'?'tag-green':s==='Negative'?'tag-red':'tag-yellow';
+  const riskBadge=r=>r.toLowerCase().includes('high')?'tag-red':r.toLowerCase().includes('medium')?'tag-yellow':'tag-green';
+
+  const contractsHTML=d.contractsAndBacklog?.length
+    ?d.contractsAndBacklog.map(c=>`
+      <div style="padding:10px 0;border-bottom:1px solid var(--line)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <strong style="color:var(--blue)">${c.party}</strong>
+          <span class="tag tag-green" style="font-family:monospace">${c.value}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${c.type}</div>
+        <div style="font-size:12px;color:var(--text)">${c.significance}</div>
+      </div>`).join('')
+    :'<p class="c-muted">No major contracts reported.</p>';
+
+  const newsHTML=d.recentNews?.length
+    ?d.recentNews.map(n=>`
+      <div style="padding:8px 0;border-bottom:1px solid var(--line)">
+        <span class="tag ${sentColor(n.sentiment)}">${n.sentiment}</span>
+        <span style="font-size:13px;font-weight:700;margin-left:6px">${n.headline}</span>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">${n.impact}</div>
+      </div>`).join('')
+    :'<p class="c-muted">No recent news data.</p>';
+
+  const consensusColor=d.analystTargets?.consensus==='Buy'?'tag-green':d.analystTargets?.consensus==='Sell'?'tag-red':'tag-yellow';
+
+  $('researchContent').innerHTML=`
+    <!-- COMPANY OVERVIEW -->
+    <div class="research-card" style="margin-bottom:14px">
+      <h3>Company Overview</h3>
+      <p><strong style="color:var(--blue)">${d.companyName||ticker}</strong> &nbsp;·&nbsp; <span class="tag tag-blue">${d.sector||'—'}</span></p>
+      <p style="margin-top:8px">${d.businessModel||'—'}</p>
+    </div>
+
+    <div class="research-grid">
+
+      <!-- LATEST EARNINGS -->
+      <div class="research-card">
+        <h3>📊 Latest Earnings — ${d.latestEarnings?.period||'—'}</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="background:#07101d;border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Revenue</div>
+            <div style="font-size:18px;font-weight:900;font-family:monospace;color:var(--blue)">${d.latestEarnings?.revenueActual||'—'}</div>
+            <div style="font-size:11px;color:var(--green-text)">${d.latestEarnings?.revenueGrowth||''}</div>
+          </div>
+          <div style="background:#07101d;border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">EPS</div>
+            <div style="font-size:18px;font-weight:900;font-family:monospace;color:var(--blue)">${d.latestEarnings?.epsActual||'—'}</div>
+            <div style="font-size:11px"><span class="tag ${d.latestEarnings?.epsBeat==='Beat'?'tag-green':d.latestEarnings?.epsBeat==='Miss'?'tag-red':'tag-yellow'}">${d.latestEarnings?.epsBeat||'—'}</span></div>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text);background:#07101d;border-radius:8px;padding:10px;border-left:3px solid var(--blue)">${d.latestEarnings?.keyHighlight||'—'}</p>
+      </div>
+
+      <!-- ANALYST TARGETS -->
+      <div class="research-card">
+        <h3>🎯 Analyst Consensus</h3>
+        <div style="text-align:center;padding:10px 0">
+          <span class="tag ${consensusColor}" style="font-size:16px;padding:8px 20px">${d.analystTargets?.consensus||'—'}</span>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">${d.analystTargets?.numberOfAnalysts||'—'} analysts</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px">
+          <div style="text-align:center;background:#07101d;border-radius:8px;padding:8px">
+            <div style="font-size:10px;color:var(--muted)">Low</div>
+            <div style="font-family:monospace;font-weight:700;color:var(--red-text)">${d.analystTargets?.lowTarget||'—'}</div>
+          </div>
+          <div style="text-align:center;background:#07101d;border-radius:8px;padding:8px;border:1px solid rgba(96,165,250,.3)">
+            <div style="font-size:10px;color:var(--muted)">Average</div>
+            <div style="font-family:monospace;font-weight:700;color:var(--blue)">${d.analystTargets?.averageTarget||'—'}</div>
+          </div>
+          <div style="text-align:center;background:#07101d;border-radius:8px;padding:8px">
+            <div style="font-size:10px;color:var(--muted)">High</div>
+            <div style="font-family:monospace;font-weight:700;color:var(--green-text)">${d.analystTargets?.highTarget||'—'}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BULL vs BEAR -->
+      <div class="research-card">
+        <h3>⚖ Bull vs Bear</h3>
+        <div style="background:var(--green-dim);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px;margin-bottom:8px">
+          <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--green-text);margin-bottom:6px">🐂 Bull Case</div>
+          <p style="font-size:12px;color:var(--text)">${d.bullCase||'—'}</p>
+        </div>
+        <div style="background:var(--red-dim);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px">
+          <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--red-text);margin-bottom:6px">🐻 Bear Case</div>
+          <p style="font-size:12px;color:var(--text)">${d.bearCase||'—'}</p>
+        </div>
+      </div>
+
+      <!-- RISKS + CATALYSTS -->
+      <div class="research-card">
+        <h3>⚠ Key Risks</h3>
+        <ul>${(d.keyRisks||[]).map(r=>`<li>${r}</li>`).join('')}</ul>
+        <h3 style="margin-top:14px">🚀 Upcoming Catalysts</h3>
+        <ul>${(d.catalysts||[]).map(c=>`<li style="color:var(--green-text)">${c}</li>`).join('')}</ul>
+      </div>
+
+    </div>
+
+    <!-- CONTRACTS & BACKLOG (full width) -->
+    <div class="research-card" style="margin-bottom:14px">
+      <h3>📋 Contracts & Revenue Backlog</h3>
+      ${contractsHTML}
+    </div>
+
+    <!-- RECENT NEWS -->
+    <div class="research-card" style="margin-bottom:14px">
+      <h3>📰 Recent News & Events</h3>
+      ${newsHTML}
+    </div>
+
+    <!-- VERDICT -->
+    <div style="background:linear-gradient(135deg,rgba(96,165,250,.08),rgba(34,211,238,.04));border:1px solid rgba(96,165,250,.25);border-radius:14px;padding:16px">
+      <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);margin-bottom:8px">⚡ AI Research Verdict</div>
+      <p style="font-size:14px;color:var(--text);line-height:1.7;margin-bottom:10px">${d.verdict||'—'}</p>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:var(--muted)">Suggested position sizing:</span>
+        <span class="tag tag-blue">${d.positionSizing||'—'}</span>
+      </div>
+    </div>
+
+    <div style="font-size:11px;color:var(--muted);margin-top:10px;text-align:right">⚠ AI-generated research. Verify with primary sources before investing. Not financial advice.</div>
+  `;
+}
+// ── PE SENSITIVITY TABLE ──────────────────────────────────────────────────────
+function renderPETable(fwdEps, fairPE, currentPrice, revenueMode){
+  const body = document.getElementById('peTableBody');
+  if(!body || revenueMode || !fwdEps || fwdEps <= 0){ 
+    if(body) body.innerHTML = '<tr><td colspan="4" class="c-muted" style="padding:12px">Not applicable in Revenue Mode or with negative EPS.</td></tr>';
+    return;
+  }
+
+  // Build range of multiples around fair PE
+  const multiples = [10, 15, 18, 20, 25, 30, 35, 40, 45, 50].filter(m => m > 0);
+  
+  body.innerHTML = multiples.map(m => {
+    const val = fwdEps * m;
+    const diff = ((val - currentPrice) / currentPrice) * 100;
+    const diffStr = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
+    const diffClass = diff > 20 ? 'c-green' : diff > 0 ? 'c-yellow' : 'c-red';
+    const isFair = Math.abs(m - fairPE) < 2;
+    const isMarket = currentPrice && fwdEps ? Math.abs(m - (currentPrice/fwdEps)) < 2 : false;
+    
+    let label = '';
+    let rowStyle = '';
+    if(isFair){ label = '⭐ Fair (calc)'; rowStyle = 'background:rgba(96,165,250,.08);'; }
+    else if(m <= 12){ label = 'Deep value'; }
+    else if(m <= 18){ label = 'Value'; }
+    else if(m <= 25){ label = 'Moderate'; }
+    else if(m <= 35){ label = 'Growth'; }
+    else{ label = 'High growth'; }
+    if(isMarket && !isFair){ label += ' ← market'; rowStyle = 'background:rgba(245,158,11,.06);'; }
+
+    return `<tr style="${rowStyle}">
+      <td class="mono" style="font-weight:${isFair?'900':'400'}">${m}x${isFair?' ★':''}</td>
+      <td style="font-size:12px;color:var(--muted)">${label}</td>
+      <td class="mono ${isFair?'c-blue':''}" style="font-weight:${isFair?'900':'400'}">${fmt$(val)}</td>
+      <td class="mono ${diffClass}">${diffStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderHistPETable(fwdEps, currentPrice){
+  const body = document.getElementById('histPEBody');
+  if(!body) return;
+  
+  const pe5 = parseFloat(document.getElementById('histPE5yr')?.value || '');
+  const pe10 = parseFloat(document.getElementById('histPE10yr')?.value || '');
+  
+  if(!fwdEps || fwdEps <= 0 || (!pe5 && !pe10)){
+    body.innerHTML = '<tr><td colspan="4" class="c-muted" style="padding:12px">Enter historical P/E values and run Calculate.</td></tr>';
+    return;
+  }
+
+  const rows = [];
+  if(pe5){
+    const val = fwdEps * pe5;
+    const diff = ((val - currentPrice) / currentPrice) * 100;
+    const diffClass = diff > 0 ? 'c-green' : 'c-red';
+    rows.push(`<tr style="background:rgba(167,139,250,.06)">
+      <td style="color:var(--purple-text);font-weight:700">5-Year Avg</td>
+      <td class="mono">${pe5.toFixed(1)}x</td>
+      <td class="mono c-purple" style="font-weight:700">${fmt$(val)}</td>
+      <td class="mono ${diffClass}">${diff>=0?'+':''}${diff.toFixed(1)}%</td>
+    </tr>`);
+  }
+  if(pe10){
+    const val = fwdEps * pe10;
+    const diff = ((val - currentPrice) / currentPrice) * 100;
+    const diffClass = diff > 0 ? 'c-green' : 'c-red';
+    rows.push(`<tr style="background:rgba(34,211,238,.04)">
+      <td style="color:var(--cyan);font-weight:700">10-Year Avg</td>
+      <td class="mono">${pe10.toFixed(1)}x</td>
+      <td class="mono" style="color:var(--cyan);font-weight:700">${fmt$(val)}</td>
+      <td class="mono ${diffClass}">${diff>=0?'+':''}${diff.toFixed(1)}%</td>
+    </tr>`);
+  }
+  if(pe5 && pe10){
+    const avgPE = (pe5 + pe10) / 2;
+    const val = fwdEps * avgPE;
+    const diff = ((val - currentPrice) / currentPrice) * 100;
+    const diffClass = diff > 0 ? 'c-green' : 'c-red';
+    rows.push(`<tr style="background:rgba(96,165,250,.08)">
+      <td style="color:var(--blue);font-weight:900">Blended Avg</td>
+      <td class="mono c-blue">${avgPE.toFixed(1)}x</td>
+      <td class="mono c-blue" style="font-weight:900">${fmt$(val)}</td>
+      <td class="mono ${diffClass}">${diff>=0?'+':''}${diff.toFixed(1)}%</td>
+    </tr>`);
+  }
+  body.innerHTML = rows.join('');
+}
+
+// ── SAFE INIT ─────────────────────────────────────────────────────────────────
+function safeInit(){
+  try{renderCompare();}catch(e){}
+  try{renderSnapshots();}catch(e){}
+  try{renderTickers();}catch(e){}
+  // Live update historical PE table when values typed
+  try{
+    ['histPE5yr','histPE10yr'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('input', ()=>{
+        if(lastResult) renderHistPETable(
+          lastResult.fwdEps || (lastResult.eps*(1+lastResult.epsGrowth/100)),
+          lastResult.price
+        );
+      });
+    });
+  }catch(e){}
+  try{loadPreset('NOW');}catch(e){console.log('Preset load skipped:',e.message);}
+}
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',safeInit);
+}else{
+  setTimeout(safeInit,100);
+}
+</script>
+
+</body>
+</html>
